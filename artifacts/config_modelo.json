@@ -1,0 +1,146 @@
+{
+  "schema_version": "1.0.0",
+  "model_id": "RF09_G2_TOP10_2024_2025",
+  "project": "Botica Pharma Lamb - pronostico de demanda (Chiclayo, Peru)",
+  "model_family": "RandomForestRegressor (RF_09)",
+  "model_params": {
+    "n_estimators": 500,
+    "max_depth": 8,
+    "min_samples_split": 2,
+    "min_samples_leaf": 1,
+    "max_features": "sqrt",
+    "random_state": 42,
+    "n_jobs": -1
+  },
+  "feature_group": {
+    "name": "G2",
+    "total_variables": 22,
+    "variables": [
+      "Anio",
+      "Mes",
+      "DiaDelMes",
+      "DiaSemana",
+      "DiaDelAno",
+      "SemanaISO",
+      "Trimestre",
+      "Mes_Sin",
+      "Mes_Cos",
+      "DiaSemana_Sin",
+      "DiaSemana_Cos",
+      "DiaDelAno_Sin",
+      "DiaDelAno_Cos",
+      "LagObs_1",
+      "LagObs_2",
+      "LagObs_3",
+      "LagObs_6",
+      "LagObs_12",
+      "LagObs_30",
+      "LagCal_7d",
+      "LagCal_14d",
+      "LagCal_28d"
+    ]
+  },
+  "numeric_features": [
+    "Anio",
+    "Mes",
+    "DiaDelMes",
+    "DiaSemana",
+    "DiaDelAno",
+    "SemanaISO",
+    "Trimestre",
+    "Mes_Sin",
+    "Mes_Cos",
+    "DiaSemana_Sin",
+    "DiaSemana_Cos",
+    "DiaDelAno_Sin",
+    "DiaDelAno_Cos",
+    "LagObs_1",
+    "LagObs_2",
+    "LagObs_3",
+    "LagObs_6",
+    "LagObs_12",
+    "LagObs_30",
+    "LagCal_7d",
+    "LagCal_14d",
+    "LagCal_28d"
+  ],
+  "categorical_feature": "Nombre Producto",
+  "top10": {
+    "count": 10,
+    "products": [
+      "MORASS PLUS TABX40/12.5X30",
+      "COMPLEJO B FORTE X 200CAP",
+      "AMAGLEN TABX4MGX30",
+      "ACNEBIOT CAPX100MGX30",
+      "AMAGLEN TABX2MGX30",
+      "TOPIREST TABx50MGx30TAB",
+      "DIABICARE XR1000MG X 30TAB",
+      "ALISEP CAPX10MGX30",
+      "DIABICARE XR 750MGX30 TAB",
+      "MORASS TABX40MGX30"
+    ]
+  },
+  "training": {
+    "start": "2024-01-02",
+    "end": "2025-12-31",
+    "activity_dates": 619,
+    "panel_rows_complete": 12380,
+    "panel_rows_top10": 6190,
+    "transformed_features": 32,
+    "categorical_levels": 10,
+    "source": "Datasources/HV_pharmalab/HV-(2024-2025).xlsx (hoja Rotacion, header=3)",
+    "features_rule": "LagObs con shift por producto; LagCal por fecha calendario exacta (-7/-14/-28 dias); NaN sin fallback"
+  },
+  "forecast_rules": {
+    "recursive": true,
+    "lagobs": [
+      1,
+      2,
+      3,
+      6,
+      12,
+      30
+    ],
+    "lagcal_days": [
+      7,
+      14,
+      28
+    ],
+    "lagcal_exact_date": true,
+    "lagcal_fallback": null,
+    "negative_prediction_clipping": 0.0,
+    "round_internal_predictions": false,
+    "future_operating_calendar": "lunes-sabado",
+    "future_unknown_closures": "no anticipados",
+    "annual_cycle_divisor": 365.25
+  },
+  "environment": {
+    "python": "3.13.5",
+    "pandas": "2.3.3",
+    "numpy": "2.3.5",
+    "scikit-learn": "1.8.0",
+    "joblib": "1.5.3"
+  },
+  "evaluation_reference": {
+    "note": "Estas métricas pertenecen a la evaluación temporal congelada y no fueron recalculadas durante el entrenamiento de producción.",
+    "development": {
+      "rf_macro_wape": 0.902498,
+      "ses_macro_wape": 0.9123,
+      "relative_improvement_pct": 1.07
+    },
+    "final_holdout_december_2025": {
+      "rf_macro_wape": 0.926602,
+      "ses_macro_wape": 0.940253,
+      "delta_rf_minus_ses": -0.013651,
+      "relative_improvement_pct": 1.451743
+    }
+  },
+  "forecast_reference": {
+    "period": "2026-01",
+    "planned_operating_dates": 27,
+    "forecast_rows": 270,
+    "forecast_total_top10": 8829.307412205015,
+    "label_status": "sin demanda real futura",
+    "purpose": "Referencia para comprobar reproducibilidad del pipeline, no métrica de desempeño."
+  }
+}

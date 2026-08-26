@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "model_id": "RF09_G2_TOP10_2024_2025",
+  "artifacts": {
+    "bundle_produccion.joblib": {
+      "filename": "bundle_produccion.joblib",
+      "size_bytes": 2584031,
+      "sha256": "e6364266bea56c399304d0638253581e152ea31bb735e431bbe21a906f682e2e"
+    },
+    "config_modelo.json": {
+      "filename": "config_modelo.json",
+      "size_bytes": 3728,
+      "sha256": "96b9a9be43e1393b9b6c15f4443b2880bfecf52fac09d54d75c44cc6492d0926"
+    }
+  }
+}

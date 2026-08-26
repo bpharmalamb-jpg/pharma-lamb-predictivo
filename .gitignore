@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Private datasets and raw exports
+Datasources/
+*.xlsx
+*.xls
+*.csv
+
+# Modelo base necesario para ejecutar la aplicación
+*.joblib
+!artifacts/
+!artifacts/bundle_produccion.joblib
+!artifacts/config_modelo.json
+!artifacts/manifest.json
+
+# Artefactos que NO se publican
+artifacts_investigacion/
+artifacts_operacion/
+
+# Local/editor/system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Notebooks de investigación - no necesarios para producción
+notebooks/
