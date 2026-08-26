@@ -362,8 +362,9 @@ es_operativo = directorio_actual != ARTIFACT_DIR
 try:
     bundle, config, manifest = cachear_artefactos(str(directorio_actual))
     pronostico_diario, pronostico_mensual = cachear_pronostico(str(directorio_actual))
-except Exception:
+except Exception as e:
     st.error("No fue posible cargar el modelo predictivo de producción.")
+    st.exception(e)
     st.stop()
 
 historial = bundle["historial_top10"]
