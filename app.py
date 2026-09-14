@@ -35,7 +35,7 @@ from src.actualizacion_modelo import (
 )
 
 st.set_page_config(
-    page_title="Botica Farmalab - Tablero Predictivo de Demanda",
+    page_title="Botica Pharma lab - Tablero Predictivo de Demanda",
     layout="wide",
 )
 
