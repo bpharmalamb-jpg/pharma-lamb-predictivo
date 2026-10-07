@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tablero operativo de pronostico de demanda - Botica Farmalab (ETAPA 6.3).
+"""Tablero operativo de pronostico de demanda - Botica Pharma Lamb (ETAPA 6.3).
 
 Dos areas:
 - Consultar pronostico: consume el motor src.forecasting (artefactos
@@ -35,7 +35,7 @@ from src.actualizacion_modelo import (
 )
 
 st.set_page_config(
-    page_title="Botica Pharma lab - Tablero Predictivo de Demanda",
+    page_title="Botica Pharma Lamb - Tablero Predictivo de Demanda",
     layout="wide",
 )
 
@@ -107,7 +107,7 @@ st.markdown(
         border-left: 4px solid {NARANJA};
         border-radius: 8px;
         padding: 0.75rem 0.82rem;
-        min-height: 88px;
+        min-height: 108px;
         box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
     }}
     .kpi-label {{
@@ -123,6 +123,12 @@ st.markdown(
         font-weight: 800;
         line-height: 1.15;
         word-break: normal;
+    }}
+    .kpi-detail {{
+        color: #6B7280;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-top: 0.32rem;
     }}
     .planning-note {{
         border-left: 4px solid {NARANJA};
@@ -185,20 +191,18 @@ def _etiqueta_periodo(historial) -> str:
     return f"{_nombre_mes(primer_dia.month)} {primer_dia.year}"
 
 
-def _fecha_corta(fecha) -> str:
-    return pd.Timestamp(fecha).strftime("%d/%m")
-
-
 def _fecha_larga(fecha) -> str:
     return pd.Timestamp(fecha).strftime("%d/%m/%Y")
 
 
-def _kpi(label: str, value: str) -> None:
+def _kpi(label: str, value: str, detail: str | None = None) -> None:
+    detalle = f'<div class="kpi-detail">{detail}</div>' if detail else ""
     st.markdown(
         f"""
         <div class="kpi-card">
             <div class="kpi-label">{label}</div>
             <div class="kpi-value">{value}</div>
+            {detalle}
         </div>
         """,
         unsafe_allow_html=True,
@@ -206,24 +210,23 @@ def _kpi(label: str, value: str) -> None:
 
 
 def _grafico_diario(datos: pd.DataFrame) -> alt.Chart:
-    base = datos.copy()
-    base["Fecha"] = base["Fecha Venta"].apply(_fecha_corta)
+    base = datos.sort_values("Fecha Venta").copy()
     return (
         alt.Chart(base)
         .mark_line(color=NARANJA, strokeWidth=3, point=alt.OverlayMarkDef(size=42, color=NARANJA))
         .encode(
             x=alt.X(
                 "Fecha Venta:T",
-                title=None,
-                axis=alt.Axis(format="%d/%m", tickCount=8, labelAngle=0, grid=False),
+                title="Fecha",
+                axis=alt.Axis(format="%d/%m", tickCount=10, labelAngle=-35, grid=False),
             ),
-            y=alt.Y("Prediccion:Q", title="Demanda pronosticada"),
+            y=alt.Y("Prediccion:Q", title="Demanda estimada"),
             tooltip=[
-                alt.Tooltip("Fecha:N", title="Fecha"),
-                alt.Tooltip("Prediccion:Q", title="Pronóstico", format=",.2f"),
+                alt.Tooltip("Fecha Venta:T", title="Fecha", format="%d/%m/%Y"),
+                alt.Tooltip("Prediccion:Q", title="Demanda estimada", format=",.2f"),
             ],
         )
-        .properties(height=270)
+        .properties(height=360)
     )
 
 
@@ -232,14 +235,14 @@ def _grafico_mensual(datos: pd.DataFrame) -> alt.Chart:
     base = base.rename(
         columns={
             "Nombre Producto": "Medicamento",
-            "Pronostico_Mensual": "Pronóstico mensual",
+            "Pronostico_Mensual": "Total pronosticado del período",
         }
     )
     return (
         alt.Chart(base)
         .mark_bar(color=NARANJA, cornerRadiusEnd=3)
         .encode(
-            x=alt.X("Pronóstico mensual:Q", title="Demanda pronosticada"),
+            x=alt.X("Total pronosticado del período:Q", title="Demanda estimada"),
             y=alt.Y(
                 "Medicamento:N",
                 sort="-x",
@@ -248,7 +251,7 @@ def _grafico_mensual(datos: pd.DataFrame) -> alt.Chart:
             ),
             tooltip=[
                 alt.Tooltip("Medicamento:N"),
-                alt.Tooltip("Pronóstico mensual:Q", format=",.2f"),
+                alt.Tooltip("Total pronosticado del período:Q", format=",.2f"),
                 alt.Tooltip("Ranking:Q", format="d"),
             ],
         )
@@ -298,7 +301,7 @@ def _procesar_login(credenciales: tuple[str, str] | None) -> None:
 def _mostrar_login() -> None:
     columnas = st.columns([1, 1.05, 1])
     with columnas[1]:
-        st.markdown('<div class="login-title">Botica Farmalab</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-title">Botica Pharma Lamb</div>', unsafe_allow_html=True)
         st.markdown(
             '<div class="login-subtitle">Tablero Predictivo de Demanda</div>',
             unsafe_allow_html=True,
@@ -380,7 +383,7 @@ tab_consultar, tab_actualizar = st.tabs(
 )
 
 with tab_consultar:
-    st.markdown('<div class="farmalab-title">Botica Farmalab</div>', unsafe_allow_html=True)
+    st.markdown('<div class="farmalab-title">Botica Pharma Lamb</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="farmalab-subtitle">Tablero Predictivo de Demanda</div>',
         unsafe_allow_html=True,
@@ -410,97 +413,148 @@ with tab_consultar:
     productos = pronostico_mensual["Nombre Producto"].astype(str).tolist()
     producto_seleccionado = st.selectbox("Medicamento", productos, key="medicamento_consulta")
 
-    st.caption(
-        "El pronóstico corresponde al mes calendario inmediatamente posterior "
-        "a la última fecha real disponible."
-    )
-
-    fila_producto = pronostico_mensual.loc[
-        pronostico_mensual["Nombre Producto"] == producto_seleccionado
-    ].iloc[0]
     diario_producto = pronostico_diario.loc[
         pronostico_diario["Nombre Producto"] == producto_seleccionado
-    ].copy()
+    ].sort_values("Fecha Venta").copy()
     serie_producto = diario_producto["Prediccion"]
+    fecha_inicio_producto = diario_producto["Fecha Venta"].min()
+    fecha_fin_producto = diario_producto["Fecha Venta"].max()
+    indice_pico = serie_producto.idxmax()
+    pico_diario = float(diario_producto.loc[indice_pico, "Prediccion"])
+    fecha_pico = diario_producto.loc[indice_pico, "Fecha Venta"]
+    total_periodo_producto = float(serie_producto.sum())
 
-    p1, p2, p3, p4 = st.columns(4)
-    with p1:
-        _kpi("Pronóstico mensual", f"{float(fila_producto['Pronostico_Mensual']):,.2f}")
-    with p2:
-        _kpi("Ranking", f"{int(fila_producto['Ranking'])} de {n_productos}")
-    with p3:
-        _kpi("Promedio diario", f"{float(serie_producto.mean()):,.2f}")
-    with p4:
-        _kpi("Máximo diario", f"{float(serie_producto.max()):,.2f}")
-
-    st.markdown('<div class="section-title">Pronóstico diario</div>', unsafe_allow_html=True)
-    st.altair_chart(_grafico_diario(diario_producto), width="stretch")
+    with st.container(border=True):
+        st.markdown("### Pronóstico de demanda diaria")
+        contexto_producto, contexto_periodo = st.columns([1.15, 1])
+        with contexto_producto:
+            st.caption("Medicamento seleccionado")
+            st.markdown(f"**{producto_seleccionado}**")
+        with contexto_periodo:
+            st.caption("Período pronosticado")
+            st.markdown(
+                f"**{_fecha_larga(fecha_inicio_producto)} – "
+                f"{_fecha_larga(fecha_fin_producto)}**"
+            )
+        st.caption(
+            "Las estimaciones corresponden al mes calendario inmediatamente "
+            "posterior a la última fecha real disponible."
+        )
 
     st.markdown(
-        '<div class="section-title">Demanda mensual pronosticada por medicamento</div>',
+        f'<div class="section-title">Demanda diaria pronosticada — '
+        f'{periodo_pronosticado}</div>',
         unsafe_allow_html=True,
     )
-    st.altair_chart(_grafico_mensual(pronostico_mensual), width="stretch")
+    st.caption(
+        f"{len(diario_producto)} fechas previstas de operación. "
+        "Cada marcador representa la demanda estimada para una fecha."
+    )
+    st.altair_chart(_grafico_diario(diario_producto), width="stretch")
 
-    tabla_ranking = pronostico_mensual.copy()
-    tabla_ranking = tabla_ranking.rename(
+    tabla_diaria = diario_producto[["Fecha Venta", "Prediccion"]].rename(
         columns={
-            "Nombre Producto": "Medicamento",
-            "Pronostico_Mensual": "Pronóstico mensual",
+            "Fecha Venta": "Fecha",
+            "Prediccion": "Demanda estimada",
         }
     )
-    tabla_ranking["Pronóstico mensual"] = tabla_ranking["Pronóstico mensual"].round(2)
-    st.markdown('<div class="section-title">Ranking de medicamentos</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-title">Predicciones diarias por fecha</div>',
+        unsafe_allow_html=True,
+    )
     st.dataframe(
-        tabla_ranking[["Ranking", "Medicamento", "Pronóstico mensual"]],
+        tabla_diaria,
         hide_index=True,
         width="stretch",
-        height=390,
+        height=360,
+        column_config={
+            "Fecha": st.column_config.DateColumn("Fecha", format="DD/MM/YYYY"),
+            "Demanda estimada": st.column_config.NumberColumn(
+                "Demanda estimada",
+                format="%.2f",
+            ),
+        },
     )
 
-    with st.expander("Información del modelo"):
-        st.write(f"**Modelo en producción:** Random Forest RF_09")
-        st.write(f"**Grupo:** G2")
-        st.write(f"**Variables numéricas:** {len(bundle['grupo_g2'])}")
-        st.write(f"**Productos:** {n_productos}")
-        st.write(
-            f"**Entrenamiento:** {config['training']['start']} a "
-            f"{config['training']['end']}"
+    st.markdown('<div class="section-title">Resumen del período</div>', unsafe_allow_html=True)
+    p1, p2, p3 = st.columns(3)
+    with p1:
+        _kpi("Promedio diario", f"{float(serie_producto.mean()):,.2f}")
+    with p2:
+        _kpi(
+            "Pico diario estimado",
+            f"{pico_diario:,.2f}",
+            f"Fecha del pico: {_fecha_larga(fecha_pico)}",
         )
-        st.write("**Regla de horizonte:** siguiente mes calendario")
-        st.write("**Calendario futuro:** lunes a sábado")
-        st.write("**Clima:** no utilizado por el modelo final")
-        if es_operativo:
-            st.write(f"**Modelo operacional (versión):** {config.get('operacion', {}).get('version', '')}")
-
-    with st.expander("Validación histórica"):
-        evaluacion = config["evaluation_reference"]
-        desarrollo = evaluacion["development"]
-        holdout = evaluacion["final_holdout_december_2025"]
-        st.write("**Desarrollo:**")
-        st.write(f"RF Macro-WAPE = {desarrollo['rf_macro_wape']:.6f}")
-        st.write(f"SES Macro-WAPE = {desarrollo['ses_macro_wape']:.6f}")
-        st.write("**Holdout diciembre 2025:**")
-        st.write(f"RF Macro-WAPE = {holdout['rf_macro_wape']:.6f}")
-        st.write(f"SES Macro-WAPE = {holdout['ses_macro_wape']:.6f}")
-        st.write(f"**Mejora relativa final:** {holdout['relative_improvement_pct']:.6f} %")
-        st.caption(
-            "Estas métricas pertenecen a la evaluación histórica congelada del "
-            "modelo y no representan la precisión del pronóstico futuro mostrado."
-        )
-        st.caption(
-            "SES es el método estadístico de referencia utilizado en el estudio; "
-            "no representa el procedimiento empírico actual de la botica."
-        )
+    with p3:
+        _kpi("Total pronosticado del período", f"{total_periodo_producto:,.2f}")
+    st.caption(
+        "Suma de las estimaciones diarias del período, calculada con los valores "
+        "originales sin redondear. No representa una cantidad automática de compra."
+    )
 
     st.markdown(
         '<div class="planning-note">'
-        "Los valores mostrados corresponden a pronósticos de demanda y sirven "
-        "como apoyo para la planificación. No representan automáticamente una "
-        "cantidad de compra ni sustituyen las decisiones de inventario."
+        "Los valores mostrados son estimaciones de demanda y constituyen información "
+        "de apoyo para la planificación. No representan cantidades exactas o "
+        "garantizadas para realizar pedidos."
         "</div>",
         unsafe_allow_html=True,
     )
+
+    with st.expander("Comparación entre medicamentos y ranking"):
+        st.caption(
+            "Información agregada secundaria, calculada a partir de las "
+            "predicciones diarias de cada medicamento."
+        )
+        st.markdown(
+            '<div class="section-title">Totales pronosticados del período por '
+            'medicamento</div>',
+            unsafe_allow_html=True,
+        )
+        st.altair_chart(_grafico_mensual(pronostico_mensual), width="stretch")
+
+        tabla_ranking = pronostico_mensual.copy()
+        tabla_ranking = tabla_ranking.rename(
+            columns={
+                "Nombre Producto": "Medicamento",
+                "Pronostico_Mensual": "Total pronosticado del período",
+            }
+        )
+        tabla_ranking["Total pronosticado del período"] = tabla_ranking[
+            "Total pronosticado del período"
+        ].round(2)
+        st.markdown(
+            '<div class="section-title">Ranking agregado del período</div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(
+            tabla_ranking[
+                ["Ranking", "Medicamento", "Total pronosticado del período"]
+            ],
+            hide_index=True,
+            width="stretch",
+            height=390,
+        )
+
+    with st.expander("Sobre el modelo"):
+        st.write("**Modelo operativo:** Random Forest RF_09.")
+        st.write("**Variables:** grupo G2.")
+        st.write("**Unidad de predicción:** demanda diaria por medicamento.")
+        st.write("**Criterio principal de selección:** Macro-WAPE.")
+        st.write(
+            "RF_09 obtuvo menor Macro-WAPE que SES bajo el protocolo de evaluación, "
+            "aunque el desempeño varió entre medicamentos, períodos y métricas."
+        )
+        st.caption(
+            f"Modelo entrenado con datos de {config['training']['start']} a "
+            f"{config['training']['end']}. El horizonte corresponde al siguiente "
+            "mes calendario y considera fechas de lunes a sábado."
+        )
+        if es_operativo:
+            st.caption(
+                f"Versión operacional: {config.get('operacion', {}).get('version', '')}"
+            )
 
 with tab_actualizar:
     st.title("Actualizar datos y modelo")
@@ -572,7 +626,7 @@ with tab_actualizar:
                                 f"{resultado['proximo_mes']}"
                             )
                             st.write(
-                                f"**Demanda total pronosticada:** "
+                                f"**Demanda total estimada del nuevo período:** "
                                 f"{resultado['total_pronostico']:,.2f}"
                             )
                             st.caption(f"Versión operacional: {resultado['version']}")
@@ -592,5 +646,5 @@ with tab_actualizar:
                 )
 
 st.divider()
-st.caption("Botica Farmalab · Tablero predictivo de demanda")
+st.caption("Botica Pharma Lamb · Tablero predictivo de demanda")
 st.caption("Modelo: RF09_G2_TOP10_2024_2025")
